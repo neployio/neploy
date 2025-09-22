@@ -57,3 +57,10 @@ export interface CreateRoleRequest {
 export interface GatewayConfigRequest {
   defaultVersioning: string;
 }
+
+export interface DeployApplicationRequest {
+  repoUrl: string;
+  branch: string;
+  endpointType?: "subdomain" | "path";
+  domain?: string;
+}

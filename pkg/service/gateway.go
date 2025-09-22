@@ -129,10 +129,12 @@ func (s *gateway) ListByApp(ctx context.Context, appID string) ([]model.Gateway,
 
 func (s *gateway) AddRoute(ctx context.Context, gateway model.Gateway) error {
 	route := neployway.Route{
-		AppID:  gateway.ApplicationID,
-		Port:   gateway.Port,
-		Domain: gateway.Domain,
-		Path:   gateway.Path,
+		AppID:        gateway.ApplicationID,
+		Port:         gateway.Port,
+		Domain:       gateway.Domain,
+		Subdomain:    gateway.Subdomain,
+		Path:         gateway.Path,
+		EndpointType: gateway.EndpointType,
 	}
 
 	if err := s.router.AddRoute(route); err != nil {
@@ -146,13 +148,14 @@ func (s *gateway) AddRoute(ctx context.Context, gateway model.Gateway) error {
 }
 
 func (s *gateway) RemoveRoute(ctx context.Context, gateway model.Gateway) error {
-	route := neployway.Route{
-		AppID:  gateway.ApplicationID,
-		Domain: gateway.Domain,
-		Path:   gateway.Path,
+	var routeKey string
+	if gateway.EndpointType == "subdomain" {
+		routeKey = gateway.Subdomain + "." + gateway.Domain
+	} else {
+		routeKey = gateway.Path
 	}
 
-	s.router.RemoveRoute(route.Path)
+	s.router.RemoveRoute(routeKey)
 	return nil
 }
 

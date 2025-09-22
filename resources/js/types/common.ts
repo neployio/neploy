@@ -75,13 +75,13 @@ export interface TeamMember {
 
 export interface Gateway {
   id: string;
-  name: string;
+  domain: string;
+  subdomain: string;
   path: string;
-  httpMethod: string;
-  backendUrl: string;
-  requiresAuth: boolean;
-  rateLimit: number;
+  port: string;
   applicationId: string;
+  status: string;
+  endpointType: "subdomain" | "path";
   application: Application;
 }
 

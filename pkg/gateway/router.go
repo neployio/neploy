@@ -13,10 +13,12 @@ import (
 )
 
 type Route struct {
-	AppID  string
-	Port   string
-	Domain string
-	Path   string
+	AppID        string
+	Port         string
+	Domain       string
+	Subdomain    string
+	Path         string
+	EndpointType string // "subdomain" or "path"
 }
 
 type Router struct {
@@ -153,7 +155,13 @@ func (r *Router) AddRoute(route Route) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	routeKey := route.Path
+	var routeKey string
+	if route.EndpointType == "subdomain" {
+		routeKey = route.Subdomain + "." + route.Domain
+	} else {
+		routeKey = route.Path
+	}
+	
 	r.routes[routeKey] = proxy
 	r.routeInfo[routeKey] = route
 
@@ -280,21 +288,30 @@ func (r *Router) matchesRoute(req *http.Request, route Route) bool {
 		log.Printf("DEBUG: Asset request denied for path: %s", path)
 	}
 
-	if route.Path != "" {
-		// Standard path matching
-		matches := strings.HasPrefix(path, route.Path)
-		
-		// Track user app context for non-asset requests
-		if matches && !isAssetRequest(path) {
-			appName := ExtractAppName(route.Path)
-			if appName != "" {
-				r.setUserAppContext(userIP, appName)
-			}
+	// Check for subdomain or path matching
+	var matches bool
+	var appName string
+
+	if route.EndpointType == "subdomain" {
+		// Subdomain matching
+		host := req.Host
+		expectedHost := route.Subdomain + "." + route.Domain
+		matches = strings.HasPrefix(host, expectedHost)
+		appName = route.Subdomain
+	} else {
+		// Path matching
+		if route.Path != "" {
+			matches = strings.HasPrefix(path, route.Path)
+			appName = ExtractAppName(route.Path)
 		}
-		
-		return matches
 	}
-	return true
+	
+	// Track user app context for non-asset requests
+	if matches && !isAssetRequest(path) && appName != "" {
+		r.setUserAppContext(userIP, appName)
+	}
+	
+	return matches
 }
 
 func ValidateRoute(route Route) error {

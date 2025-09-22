@@ -26,10 +26,16 @@ export const applications = baseApi.injectEndpoints({
       invalidatesTags: ["applications"],
     }),
     deployApplication: builder.mutation({
-      query: ({ appId, repoUrl, branch }: { appId: string; repoUrl: string; branch: string }) => ({
+      query: ({ appId, repoUrl, branch, endpointType, domain }: { 
+        appId: string; 
+        repoUrl: string; 
+        branch: string; 
+        endpointType?: string; 
+        domain?: string; 
+      }) => ({
         url: `applications/${appId}/deploy`,
         method: "POST",
-        body: { repoUrl, branch },
+        body: { repoUrl, branch, endpointType, domain },
       }),
       invalidatesTags: ["applications"],
     }),

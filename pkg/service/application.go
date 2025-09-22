@@ -36,7 +36,7 @@ type Application interface {
 	StartContainer(ctx context.Context, id, versionID string) error
 	StopContainer(ctx context.Context, id, versionID string) error
 	GetRepoBranches(ctx context.Context, repoURL string) ([]string, error)
-	Deploy(ctx context.Context, id string, repoURL string, branch string) error
+	Deploy(ctx context.Context, id string, repoURL string, branch string, endpointType string, domain string) error
 	Upload(ctx context.Context, id string, file *multipart.FileHeader) (string, error)
 	DeleteVersion(ctx context.Context, appID string, versionID string) error
 	GetHealthy(ctx context.Context) (uint, uint, error)
@@ -101,8 +101,8 @@ func (a *application) GetRepoBranches(ctx context.Context, repoURL string) ([]st
 	return repo.GetBranches()
 }
 
-func (a *application) Deploy(ctx context.Context, id string, repoURL string, branch string) error {
-	return a.versioningService.Deploy(ctx, id, repoURL, branch)
+func (a *application) Deploy(ctx context.Context, id string, repoURL string, branch string, endpointType string, domain string) error {
+	return a.versioningService.Deploy(ctx, id, repoURL, branch, endpointType, domain)
 }
 
 func (a *application) Upload(ctx context.Context, id string, file *multipart.FileHeader) (string, error) {

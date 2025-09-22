@@ -49,6 +49,8 @@ const uploadFormSchema = z.object({
     )
     .optional(),
   branch: z.string().optional(),
+  endpointType: z.enum(["path", "subdomain"]).optional(),
+  domain: z.string().optional(),
 });
 
 export const ApplicationView: FC<ApplicationProps> = ({ application }) => {
@@ -235,6 +237,8 @@ export const ApplicationView: FC<ApplicationProps> = ({ application }) => {
           appId: application.id,
           repoUrl: values.repoUrl,
           branch: values.branch,
+          endpointType: values.endpointType,
+          domain: values.domain,
         }).unwrap();
       }
 

@@ -77,10 +77,12 @@ type Trace struct {
 type Gateway struct {
 	BaseEntity
 	Domain        string `json:"domain" db:"domain"`
+	Subdomain     string `json:"subdomain" db:"subdomain"`
 	Path          string `json:"path" db:"path"`
 	Port          string `json:"port" db:"port"`
 	ApplicationID string `json:"applicationId" db:"application_id"`
 	Status        string `json:"status" db:"status"` // "active", "inactive", "error"
+	EndpointType  string `json:"endpointType" db:"endpoint_type"` // "subdomain", "path"
 }
 
 type ApplicationStat struct {
