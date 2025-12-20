@@ -4,20 +4,17 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/romsar/gonertia"
 	"neploy.dev/pkg/logger"
 	"neploy.dev/pkg/model"
 	"neploy.dev/pkg/service"
 )
 
 type TechStack struct {
-	inertia *gonertia.Inertia
 	service service.TechStack
 }
 
-func NewTechStack(i *gonertia.Inertia, service service.TechStack) *TechStack {
+func NewTechStack(service service.TechStack) *TechStack {
 	return &TechStack{
-		inertia: i,
 		service: service,
 	}
 }

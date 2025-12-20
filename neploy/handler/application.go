@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/labstack/echo/v4"
-	inertia "github.com/romsar/gonertia"
 	"neploy.dev/config"
 	"neploy.dev/pkg/logger"
 	"neploy.dev/pkg/model"
@@ -14,13 +13,11 @@ import (
 
 type Application struct {
 	service service.Application
-	i       *inertia.Inertia
 }
 
-func NewApplication(service service.Application, i *inertia.Inertia) *Application {
+func NewApplication(service service.Application) *Application {
 	return &Application{
 		service: service,
-		i:       i,
 	}
 }
 
@@ -263,9 +260,9 @@ func (a *Application) List(c echo.Context) error {
 
 	// If it's a page load (Inertia request), render the full page
 	if c.Request().Header.Get("X-Inertia") != "" {
-		return a.i.Render(c.Response(), c.Request(), "Dashboard/Applications", inertia.Props{
-			"applications": apps,
-		})
+		// return a.i.Render(c.Response(), c.Request(), "Dashboard/Applications", inertia.Props{
+		// 	"applications": apps,
+		// })
 	}
 
 	// For API calls, return JSON

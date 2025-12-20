@@ -9,7 +9,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	inertia "github.com/romsar/gonertia"
 
 	"neploy.dev/config"
 	"neploy.dev/pkg/logger"
@@ -19,13 +18,11 @@ import (
 
 type Dashboard struct {
 	services service.Services
-	i        *inertia.Inertia
 }
 
-func NewDashboard(services service.Services, i *inertia.Inertia) *Dashboard {
+func NewDashboard(services service.Services) *Dashboard {
 	return &Dashboard{
 		services: services,
-		i:        i,
 	}
 }
 

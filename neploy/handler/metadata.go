@@ -4,18 +4,16 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	inertia "github.com/romsar/gonertia"
 	"neploy.dev/pkg/model"
 	"neploy.dev/pkg/service"
 )
 
 type Metadata struct {
 	service service.Metadata
-	i       *inertia.Inertia
 }
 
-func NewMetadata(service service.Metadata, i *inertia.Inertia) *Metadata {
-	return &Metadata{service, i}
+func NewMetadata(service service.Metadata) *Metadata {
+	return &Metadata{service}
 }
 
 func (h *Metadata) RegisterRoutes(r *echo.Group) {

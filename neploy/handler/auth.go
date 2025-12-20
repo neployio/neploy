@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	neployware "neploy.dev/neploy/middleware"
 
 	"github.com/labstack/echo/v4"
-	inertia "github.com/romsar/gonertia"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/gitlab"
@@ -28,9 +26,9 @@ import (
 func checkRateLimit(ip string) bool {
 	model.LoginAttemptsMutex.Lock()
 	defer model.LoginAttemptsMutex.Unlock()
-	
+
 	now := time.Now()
-	
+
 	// Clean up old entries periodically
 	if now.Second()%30 == 0 { // Clean every ~30 seconds
 		for ip, attempt := range model.LoginAttempts {
@@ -39,48 +37,46 @@ func checkRateLimit(ip string) bool {
 			}
 		}
 	}
-	
+
 	attempt, exists := model.LoginAttempts[ip]
 	if !exists {
 		model.LoginAttempts[ip] = &model.LoginAttempt{Attempts: 1, LastTry: now}
 		return true
 	}
-	
+
 	// Check if IP is locked out
 	if !attempt.LockUntil.IsZero() && now.Before(attempt.LockUntil) {
 		return false
 	}
-	
+
 	// Reset attempts if outside rate window
 	if now.Sub(attempt.LastTry) > model.RateWindow {
 		attempt.Attempts = 0
 		attempt.LockUntil = time.Time{}
 	}
-	
+
 	// Increment attempt counter
 	attempt.Attempts++
 	attempt.LastTry = now
-	
+
 	// Lock out IP if too many attempts
 	if attempt.Attempts > model.MaxLoginAttempts {
 		attempt.LockUntil = now.Add(model.LockoutDuration)
 		return false
 	}
-	
+
 	return true
 }
 
 type Auth struct {
 	user     service.User
 	metadata service.Metadata
-	i        *inertia.Inertia
 }
 
-func NewAuth(user service.User, metadata service.Metadata, i *inertia.Inertia) *Auth {
+func NewAuth(user service.User, metadata service.Metadata) *Auth {
 	return &Auth{
 		user:     user,
 		metadata: metadata,
-		i:        i,
 	}
 }
 
@@ -134,38 +130,38 @@ func (a *Auth) RegisterRoutes(r *echo.Group) {
 func (a *Auth) Login(c echo.Context) error {
 	// Get client IP for rate limiting
 	clientIP := c.RealIP()
-	
+
 	// Simple in-memory rate limiting (should be replaced with a proper rate limiter in production)
 	if !checkRateLimit(clientIP) {
 		return c.JSON(http.StatusTooManyRequests, map[string]interface{}{
 			"error": "Too many login attempts, please try again later",
 		})
 	}
-	
+
 	var req model.LoginRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"error": "Invalid request format",
+			"error":   "Invalid request format",
 			"details": err.Error(),
 		})
 	}
 
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"error": "Validation failed",
+			"error":   "Validation failed",
 			"details": err.Error(),
 		})
 	}
 
 	// Sanitize inputs to prevent injection attacks
 	req.Email = strings.TrimSpace(req.Email)
-	
+
 	// Validate and authenticate user
 	res, err := a.user.Login(c.Request().Context(), req)
 	if err != nil {
 		// Log failed login attempts
 		logger.Warn("Failed login attempt for email: %s from IP: %s", req.Email, clientIP)
-		
+
 		// Use a generic error message to prevent user enumeration
 		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 			"error": "Invalid email or password",
@@ -174,7 +170,7 @@ func (a *Auth) Login(c echo.Context) error {
 
 	// Log successful login
 	logger.Info("Successful login for user: %s from IP: %s", req.Email, clientIP)
-	
+
 	// Set secure cookie
 	cookie := new(http.Cookie)
 	cookie.Name = "token"
@@ -183,14 +179,14 @@ func (a *Auth) Login(c echo.Context) error {
 	cookie.Path = "/"
 	cookie.Secure = config.Env.Env != "local" // Require HTTPS in non-local environments
 	cookie.SameSite = http.SameSiteStrictMode // Prevent CSRF
-	
+
 	// Set cookie expiration based on environment
 	if config.Env.Env == "local" || config.Env.Env == "development" {
 		cookie.MaxAge = 86400 // 24 hours for development
 	} else {
 		cookie.MaxAge = 3600 // 1 hour for production
 	}
-	
+
 	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, res)
@@ -213,23 +209,25 @@ func (a *Auth) Logout(c echo.Context) error {
 	cookie.Expires = time.Unix(0, 0)
 	c.SetCookie(cookie)
 
-	a.i.Redirect(c.Response(), c.Request(), "/")
+	// a.i.Redirect(c.Response(), c.Request(), "/")
 
 	return nil
 }
 
 func (a *Auth) Index(c echo.Context) error {
-	metadata, err := a.metadata.Get(c.Request().Context())
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"error": "Failed to get metadata",
-		})
-	}
-	return a.i.Render(c.Response(), c.Request(), "Home/Login", inertia.Props{"logoUrl": metadata.LogoURL, "name": metadata.TeamName, "language": metadata.Language})
+	// metadata, err := a.metadata.Get(c.Request().Context())
+	// if err != nil {
+	// 	return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+	// 		"error": "Failed to get metadata",
+	// 	})
+	// }
+	// return a.i.Render(c.Response(), c.Request(), "Home/Login", inertia.Props{"logoUrl": metadata.LogoURL, "name": metadata.TeamName, "language": metadata.Language})
+	return nil
 }
 
 func (a *Auth) Onboard(c echo.Context) error {
-	return a.i.Render(c.Response(), c.Request(), "Home/Onboard", inertia.Props{})
+	// return a.i.Render(c.Response(), c.Request(), "Home/Onboard", inertia.Props{})
+	return nil
 }
 
 // GithubOAuth godoc
@@ -449,23 +447,25 @@ func (a *Auth) PasswordReset(c echo.Context) error {
 }
 
 func (a *Auth) PasswordResetPage(c echo.Context) error {
-	claims, ok := c.Get("claims").(model.JWTClaims)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-			"error": "Unauthorized",
-		})
-	}
+	// claims, ok := c.Get("claims").(model.JWTClaims)
+	// if !ok {
+	// 	return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+	// 		"error": "Unauthorized",
+	// 	})
+	// }
 
-	return a.i.Render(c.Response(), c.Request(), "Auth/PasswordReset", inertia.Props{"name": claims.Name})
+	// return a.i.Render(c.Response(), c.Request(), "Auth/PasswordReset", inertia.Props{"name": claims.Name})
+	return nil
 }
 
 func (d *Auth) GetMarkdown(c echo.Context) error {
-	content, err := os.ReadFile("resources/md/introduccion.md")
-	if err != nil {
-		return c.String(http.StatusNotFound, "Sección no encontrada")
-	}
+	// content, err := os.ReadFile("resources/md/introduccion.md")
+	// if err != nil {
+	// 	return c.String(http.StatusNotFound, "Sección no encontrada")
+	// }
 
-	return d.i.Render(c.Response().Writer, c.Request(), "Home/Manual", map[string]interface{}{
-		"content": string(content),
-	})
+	// return d.i.Render(c.Response().Writer, c.Request(), "Home/Manual", map[string]interface{}{
+	// 	"content": string(content),
+	// })
+	return nil
 }

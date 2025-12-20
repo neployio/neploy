@@ -11,13 +11,11 @@ import (
 )
 
 type Role struct {
-	inertia *gonertia.Inertia
 	service service.Role
 }
 
-func NewRole(i *gonertia.Inertia, service service.Role) *Role {
+func NewRole(service service.Role) *Role {
 	return &Role{
-		inertia: i,
 		service: service,
 	}
 }

@@ -10,7 +10,6 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 	neployware "neploy.dev/neploy/middleware"
 	neployway "neploy.dev/pkg/gateway"
-	"neploy.dev/pkg/logger"
 	"neploy.dev/pkg/repository"
 	"neploy.dev/pkg/service"
 	"neploy.dev/pkg/store"
@@ -28,12 +27,6 @@ type Neploy struct {
 }
 
 func Start(npy Neploy) {
-	i := initInertia()
-	if i == nil {
-		logger.Debug("Error initializing Inertia")
-		return
-	}
-
 	e := echo.New()
 
 	// Initialize repositories
@@ -57,15 +50,6 @@ func Start(npy Neploy) {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "[${remote_ip}]:${port} ${status} - ${method} ${path} ${latency}\n",
 	}))
-	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			err := echo.WrapMiddleware(i.Middleware)(next)(c)
-			if err != nil {
-				logger.Debug("[INERTIA MIDDLEWARE ERROR] %v", err)
-			}
-			return err
-		}
-	})
 
 	// WebSocket routes with specialized handlers
 	e.GET("/ws/notifications", websocket.UpgradeProgressWS())
@@ -81,7 +65,7 @@ func Start(npy Neploy) {
 	e.Validator = &CustomValidator{validator: vldtr}
 
 	// Routes
-	RegisterRoutes(e, i, npy)
+	RegisterRoutes(e, npy)
 
 	// Static files
 	e.GET("/build/assets/:filename", func(c echo.Context) error {
@@ -154,8 +138,8 @@ func NewRepositories(npy Neploy) repository.Repositories {
 		Trace:              trace,
 		User:               user,
 		// UserOauth removed as part of OAuth refactoring
-		UserRole:           userRole,
-		UserTechStack:      userTechStack,
-		VisitorTrace:       visitorTrace,
+		UserRole:      userRole,
+		UserTechStack: userTechStack,
+		VisitorTrace:  visitorTrace,
 	}
 }

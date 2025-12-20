@@ -1,12 +1,12 @@
 package handler
 
 import (
-	"neploy.dev/pkg/logger"
 	"net/http"
 	"slices"
 
+	"neploy.dev/pkg/logger"
+
 	"github.com/labstack/echo/v4"
-	inertia "github.com/romsar/gonertia"
 	"neploy.dev/pkg/model"
 	"neploy.dev/pkg/service"
 )
@@ -14,14 +14,12 @@ import (
 type Gateway struct {
 	gatewayService service.Gateway
 	healthChecker  service.HealthChecker
-	i              *inertia.Inertia
 }
 
-func NewGateway(gatewayService service.Gateway, healthChecker service.HealthChecker, i *inertia.Inertia) *Gateway {
+func NewGateway(gatewayService service.Gateway, healthChecker service.HealthChecker) *Gateway {
 	return &Gateway{
 		gatewayService: gatewayService,
 		healthChecker:  healthChecker,
-		i:              i,
 	}
 }
 

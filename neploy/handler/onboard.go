@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/romsar/gonertia"
 	"neploy.dev/pkg/logger"
 	"neploy.dev/pkg/model"
 	"neploy.dev/pkg/service"
@@ -20,7 +19,7 @@ func NewOnboard(service service.Onboard) *Onboard {
 	}
 }
 
-func (o *Onboard) RegisterRoutes(r *echo.Group, i *gonertia.Inertia) {
+func (o *Onboard) RegisterRoutes(r *echo.Group) {
 	r.POST("", o.Initiate)
 }
 

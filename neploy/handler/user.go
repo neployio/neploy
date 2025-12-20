@@ -14,11 +14,10 @@ import (
 type User struct {
 	user     service.User
 	metadata service.Metadata
-	i        *inertia.Inertia
 }
 
-func NewUser(user service.User, metadata service.Metadata, i *inertia.Inertia) *User {
-	return &User{user: user, metadata: metadata, i: i}
+func NewUser(user service.User, metadata service.Metadata) *User {
+	return &User{user: user, metadata: metadata}
 }
 
 func (u *User) RegisterRoutes(r *echo.Group) {
