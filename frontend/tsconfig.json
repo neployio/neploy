@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["frontend/src/*"]
+    },
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "esModuleInterop": true
+  },
+  "exclude": ["./node_modules", "./public/build"]
+}
