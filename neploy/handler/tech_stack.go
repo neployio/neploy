@@ -60,12 +60,12 @@ func (h *TechStack) Create(c echo.Context) error {
 	var req model.CreateTechStackRequest
 	if err := c.Bind(&req); err != nil {
 		logger.Error("error binding request: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/400", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	if err := h.service.Create(c.Request().Context(), req); err != nil {
 		logger.Error("error creating tech stack: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/500", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	return c.JSON(http.StatusCreated, echo.Map{
@@ -90,12 +90,12 @@ func (h *TechStack) Update(c echo.Context) error {
 	var req model.CreateTechStackRequest
 	if err := c.Bind(&req); err != nil {
 		logger.Error("error binding request: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/400", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	if err := h.service.Update(c.Request().Context(), id, req); err != nil {
 		logger.Error("error updating tech stack: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/500", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
@@ -117,7 +117,7 @@ func (h *TechStack) Delete(c echo.Context) error {
 	id := c.Param("id")
 	if err := h.service.Delete(c.Request().Context(), id); err != nil {
 		logger.Error("error deleting tech stack: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/500", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{

@@ -45,6 +45,7 @@
     "react-i18next": "^15.4.0",
     "react-markdown": "^10.1.0",
     "react-redux": "^9.2.0",
+    "react-router-dom": "^7.11.0",
     "react-syntax-highlighter": "^15.6.1",
     "recharts": "^2.15.3",
     "redux": "^5.0.1",
@@ -72,6 +73,5 @@
     "tailwindcss": "^3.2.1",
     "tailwindcss-animate": "^1.0.7",
     "vite": "^5.0"
-  },
-  "packageManager": "yarn@4.5.0+sha512.837566d24eec14ec0f5f1411adb544e892b3454255e61fdef8fd05f3429480102806bac7446bc9daff3896b01ae4b62d00096c7e989f1596f2af10b927532f39"
+  }
 }

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/romsar/gonertia"
 	"neploy.dev/pkg/logger"
 	"neploy.dev/pkg/model"
 	"neploy.dev/pkg/service"
@@ -64,12 +63,12 @@ func (h *Role) Create(c echo.Context) error {
 	var req model.CreateRoleRequest
 	if err := c.Bind(&req); err != nil {
 		logger.Error("error binding request: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/400", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	if err := h.service.Create(c.Request().Context(), req); err != nil {
 		logger.Error("error creating role: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/500", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	return c.JSON(http.StatusCreated, echo.Map{
@@ -94,12 +93,12 @@ func (h *Role) Update(c echo.Context) error {
 	var req model.CreateRoleRequest
 	if err := c.Bind(&req); err != nil {
 		logger.Error("error binding request: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/400", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	if err := h.service.Update(c.Request().Context(), id, req); err != nil {
 		logger.Error("error updating role: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/500", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
@@ -121,7 +120,7 @@ func (h *Role) Delete(c echo.Context) error {
 	id := c.Param("id")
 	if err := h.service.Delete(c.Request().Context(), id); err != nil {
 		logger.Error("error deleting role: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/500", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
@@ -141,15 +140,15 @@ func (h *Role) Delete(c echo.Context) error {
 // @Router /roles/users/{id} [get]
 func (h *Role) GetUserRoles(c echo.Context) error {
 	userID := c.Param("id")
-	roles, err := h.service.GetUserRoles(c.Request().Context(), userID)
+	_, err := h.service.GetUserRoles(c.Request().Context(), userID)
 	if err != nil {
 		logger.Error("error getting user roles: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/500", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
-	return h.inertia.Render(c.Response().Writer, c.Request(), "Dashboard/UserRoles", gonertia.Props{
+	return nil /* h.inertia.Render(c.Response().Writer, c.Request(), "Dashboard/UserRoles", gonertia.Props{
 		"roles": roles,
-	})
+	}) */
 }
 
 // AddUserRole godoc
@@ -169,12 +168,12 @@ func (h *Role) AddUserRole(c echo.Context) error {
 	var req model.UserRoleRequest
 	if err := c.Bind(&req); err != nil {
 		logger.Error("error binding request: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/400", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	if err := h.service.AddUserRole(c.Request().Context(), id, req); err != nil {
 		logger.Error("error adding user role: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/500", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
@@ -199,12 +198,12 @@ func (h *Role) RemoveUserRole(c echo.Context) error {
 	var req model.UserRoleRequest
 	if err := c.Bind(&req); err != nil {
 		logger.Error("error binding request: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/400", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	if err := h.service.RemoveUserRole(c.Request().Context(), id, req); err != nil {
 		logger.Error("error removing user role: %v", err)
-		return h.inertia.Render(c.Response().Writer, c.Request(), "Error/500", nil)
+		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{

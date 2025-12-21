@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	inertia "github.com/romsar/gonertia"
 	"neploy.dev/pkg/logger"
 	"neploy.dev/pkg/model"
 	"neploy.dev/pkg/service"
@@ -133,14 +132,14 @@ func (u *User) AcceptInvite(c echo.Context) error {
 	invitation, err := u.user.GetInvitationByToken(context.Background(), token)
 	if err != nil {
 		logger.Error("failed to get invitation: token=%s, error=%v", token, err)
-		return u.i.Render(c.Response(), c.Request(), "Auth/CompleteInvite", inertia.Props{
+		return nil /* u.i.Render(c.Response(), c.Request(), "Auth/CompleteInvite", inertia.Props{
 			"token":  token,
 			"error":  "Invalid or expired invitation",
 			"status": "invalid",
-		})
+		}) */
 	}
 
-	props := inertia.Props{
+	props := echo.Map{
 		"token":  token,
 		"email":  invitation.Email,
 		"status": "valid",
@@ -157,7 +156,7 @@ func (u *User) AcceptInvite(c echo.Context) error {
 		props["provider"] = provider
 	}
 
-	return u.i.Render(c.Response(), c.Request(), "Auth/CompleteInvite", props)
+	return nil /* u.i.Render(c.Response(), c.Request(), "Auth/CompleteInvite", props) */
 }
 
 // Profile godoc
@@ -188,23 +187,23 @@ func (u *User) Profile(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
 
-	userSidebar := model.UserResponse{
-		Email:    claims.Email,
-		Username: claims.Username,
-		Name:     claims.Name,
-		Provider: provider,
-		Roles:    claims.RolesLower,
-	}
+	// userSidebar := model.UserResponse{
+	// 	Email:    claims.Email,
+	// 	Username: claims.Username,
+	// 	Name:     claims.Name,
+	// 	Provider: provider,
+	// 	Roles:    claims.RolesLower,
+	// }
 
-	metadata, err := u.metadata.Get(c.Request().Context())
-	if err != nil {
-		logger.Error("error getting metadata: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+	// metadata, err := u.metadata.Get(c.Request().Context())
+	// if err != nil {
+	// 	logger.Error("error getting metadata: %v", err)
+	// 	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	// }
 
 	user.Provider = model.Provider(provider) // Convert string to Provider type
 
-	return u.i.Render(c.Response(), c.Request(), "Auth/Profile", inertia.Props{"userData": user, "user": userSidebar, "teamName": metadata.TeamName, "logoUrl": metadata.LogoURL})
+	return nil /* u.i.Render(c.Response(), c.Request(), "Auth/Profile", inertia.Props{"userData": user, "user": userSidebar, "teamName": metadata.TeamName, "logoUrl": metadata.LogoURL}) */
 }
 
 // UpdateProfile godoc
