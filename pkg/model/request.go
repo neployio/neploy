@@ -62,8 +62,10 @@ type CreateApplicationRequest struct {
 }
 
 type DeployApplicationRequest struct {
-	RepoURL string `json:"repoUrl"`
-	Branch  string `json:"branch"`
+	RepoURL      string `json:"repoUrl"`
+	Branch       string `json:"branch"`
+	EndpointType string `json:"endpointType,omitempty"` // "subdomain" or "path"
+	Domain       string `json:"domain,omitempty"`       // domain for subdomain routing
 }
 
 type GetBranchesRequest struct {
@@ -77,6 +79,15 @@ type CreateTechStackRequest struct {
 
 type GatewayConfigRequest struct {
 	DefaultVersioning VersioningType `json:"defaultVersioning" validate:"required,oneof=header uri"`
+}
+
+type CreateGatewayRequest struct {
+	Domain        string `json:"domain" validate:"required"`
+	Subdomain     string `json:"subdomain"`
+	Path          string `json:"path"`
+	Port          string `json:"port" validate:"required"`
+	ApplicationID string `json:"applicationId" validate:"required"`
+	EndpointType  string `json:"endpointType" validate:"required,oneof=subdomain path"`
 }
 
 type ProfileRequest struct {

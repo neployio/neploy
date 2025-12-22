@@ -26,7 +26,7 @@ import (
 )
 
 type Versioning interface {
-	Deploy(ctx context.Context, id string, repoURL string, branch string) error
+	Deploy(ctx context.Context, id string, repoURL string, branch string, endpointType string, domain string) error
 	Upload(ctx context.Context, id string, file *multipart.FileHeader) (string, error)
 	DeleteVersion(ctx context.Context, appID string, versionID string) error
 	GetVersionLogs(ctx context.Context, appID, versionID string) ([]string, error)
@@ -42,7 +42,7 @@ func NewVersioning(repos repository.Repositories, hub *websocket.Hub, docker *ne
 	return &versioning{repos, hub, docker}
 }
 
-func (v *versioning) Deploy(ctx context.Context, id string, repoURL string, branch string) error {
+func (v *versioning) Deploy(ctx context.Context, id string, repoURL string, branch string, endpointType string, domain string) error {
 	app, err := v.repos.Application.GetByID(ctx, id)
 	if err != nil {
 		logger.Error("error getting application: %v", err)
@@ -146,18 +146,34 @@ func (v *versioning) Deploy(ctx context.Context, id string, repoURL string, bran
 		return err
 	}
 	if len(existingGateways) == 0 {
+		// Set default values if not provided
+		if endpointType == "" {
+			endpointType = "path" // default to path-based routing
+		}
+		if domain == "" {
+			domain = "localhost" // default domain
+		}
+
 		gateway := model.Gateway{
-			Domain:        "localhost",
-			Path:          "/" + appName,
+			Domain:        domain,
 			Port:          "80",
 			ApplicationID: app.ID,
 			Status:        "active",
+			EndpointType:  endpointType,
 		}
+
+		// Configure routing based on endpoint type
+		if endpointType == "subdomain" {
+			gateway.Subdomain = appName
+		} else {
+			gateway.Path = "/" + appName
+		}
+
 		if err := v.repos.Gateway.Insert(ctx, gateway); err != nil {
 			logger.Error("error creating gateway: %v", err)
 			return err
 		}
-		logger.Info("Gateway created for application: %s", app.AppName)
+		logger.Info("Gateway created for application: %s with endpoint type: %s", app.AppName, endpointType)
 	}
 	return nil
 }

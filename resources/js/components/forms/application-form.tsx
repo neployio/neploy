@@ -31,6 +31,8 @@ const baseFields = {
     .optional(),
   branch: z.string().optional(),
   description: z.string().optional(),
+  endpointType: z.enum(["path", "subdomain"]).optional(),
+  domain: z.string().optional(),
 };
 
 const uploadFormSchema = z.discriminatedUnion("mode", [
@@ -67,6 +69,8 @@ export function ApplicationForm({ mode = "create-app", onSubmit, isUploading, br
       description: "",
       repoUrl: "",
       branch: "",
+      endpointType: "path",
+      domain: "",
     },
   });
 
@@ -178,6 +182,52 @@ export function ApplicationForm({ mode = "create-app", onSubmit, isUploading, br
             )}
           />
         )}
+        
+        {/* Endpoint Configuration */}
+        <FormField
+          control={form.control}
+          name="endpointType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Endpoint Type</FormLabel>
+              <Select value={field.value || "path"} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select endpoint type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="path">Path-based (domain.com/appname)</SelectItem>
+                  <SelectItem value="subdomain">Subdomain (appname.domain.com)</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Choose how your application will be accessed
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {form.watch("endpointType") === "subdomain" && (
+          <FormField
+            control={form.control}
+            name="domain"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Domain</FormLabel>
+                <FormControl>
+                  <Input placeholder="example.com" {...field} />
+                </FormControl>
+                <FormDescription>
+                  The base domain for subdomain routing
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary">
           <input {...getInputProps()} />
           {isDragActive ? (

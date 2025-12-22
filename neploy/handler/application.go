@@ -123,7 +123,7 @@ func (a *Application) Deploy(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
 	}
 
-	if err := a.service.Deploy(c.Request().Context(), id, req.RepoURL, req.Branch); err != nil {
+	if err := a.service.Deploy(c.Request().Context(), id, req.RepoURL, req.Branch, req.EndpointType, req.Domain); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
