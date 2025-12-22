@@ -132,11 +132,11 @@ func (u *User) AcceptInvite(c echo.Context) error {
 	invitation, err := u.user.GetInvitationByToken(context.Background(), token)
 	if err != nil {
 		logger.Error("failed to get invitation: token=%s, error=%v", token, err)
-		return nil /* u.i.Render(c.Response(), c.Request(), "Auth/CompleteInvite", inertia.Props{
+		return c.JSON(http.StatusBadRequest, echo.Map{
 			"token":  token,
 			"error":  "Invalid or expired invitation",
-			"status": "invalid",
-		}) */
+			"status": "Invalid",
+		})
 	}
 
 	props := echo.Map{
@@ -156,7 +156,7 @@ func (u *User) AcceptInvite(c echo.Context) error {
 		props["provider"] = provider
 	}
 
-	return nil /* u.i.Render(c.Response(), c.Request(), "Auth/CompleteInvite", props) */
+	return c.JSON(http.StatusOK, props)
 }
 
 // Profile godoc
@@ -187,23 +187,23 @@ func (u *User) Profile(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
 
-	// userSidebar := model.UserResponse{
-	// 	Email:    claims.Email,
-	// 	Username: claims.Username,
-	// 	Name:     claims.Name,
-	// 	Provider: provider,
-	// 	Roles:    claims.RolesLower,
-	// }
+	userSidebar := model.UserResponse{
+		Email:    claims.Email,
+		Username: claims.Username,
+		Name:     claims.Name,
+		Provider: provider,
+		Roles:    claims.RolesLower,
+	}
 
-	// metadata, err := u.metadata.Get(c.Request().Context())
-	// if err != nil {
-	// 	logger.Error("error getting metadata: %v", err)
-	// 	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	// }
+	metadata, err := u.metadata.Get(c.Request().Context())
+	if err != nil {
+		logger.Error("error getting metadata: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	user.Provider = model.Provider(provider) // Convert string to Provider type
 
-	return nil /* u.i.Render(c.Response(), c.Request(), "Auth/Profile", inertia.Props{"userData": user, "user": userSidebar, "teamName": metadata.TeamName, "logoUrl": metadata.LogoURL}) */
+	return c.JSON(http.StatusOK, echo.Map{"userData": user, "user": userSidebar, "teamName": metadata.TeamName, "logoUrl": metadata.LogoURL})
 }
 
 // UpdateProfile godoc

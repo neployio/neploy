@@ -16,7 +16,7 @@ import (
 
 func loginRoutes(e *echo.Echo, npy Neploy) {
 	auth := handler.NewAuth(npy.Services.User, npy.Services.Metadata)
-	auth.RegisterRoutes(e.Group("", middleware.TraceMiddleware(npy.Services.Trace)))
+	auth.RegisterRoutes(e.Group("/auth", middleware.TraceMiddleware(npy.Services.Trace)))
 }
 
 func onboardRoutes(e *echo.Echo, npy Neploy) {

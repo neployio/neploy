@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"neploy.dev/pkg/common"
 
 	"github.com/doug-martin/goqu/v9"
@@ -86,26 +87,6 @@ func (u *UserRole) GetByRoleID(ctx context.Context, roleID string) ([]model.User
 
 	common.AttachSQLToTrace(ctx, query)
 	return userRoles, nil
-}
-
-func (u *UserRole) Insert(ctx context.Context, userRole model.UserRoles) (model.UserRoles, error) {
-	q := u.BaseQueryInsert().
-		Rows(userRole).
-		Returning("*")
-
-	query, args, err := q.ToSQL()
-	if err != nil {
-		logger.Error("Failed to create inser query user role: %v", err)
-		return model.UserRoles{}, err
-	}
-
-	if _, err := u.Store.ExecContext(ctx, query, args...); err != nil {
-		logger.Error("Failed to insert user role: %v", err)
-		return model.UserRoles{}, err
-	}
-
-	common.AttachSQLToTrace(ctx, query)
-	return userRole, nil
 }
 
 func (u *UserRole) Delete(ctx context.Context, userRole model.UserRoles) error {

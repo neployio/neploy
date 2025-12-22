@@ -258,13 +258,6 @@ func (a *Application) List(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch applications")
 	}
 
-	// If it's a page load (Inertia request), render the full page
-	if c.Request().Header.Get("X-Inertia") != "" {
-		// return a.i.Render(c.Response(), c.Request(), "Dashboard/Applications", inertia.Props{
-		// 	"applications": apps,
-		// })
-	}
-
 	// For API calls, return JSON
 	return c.JSON(http.StatusOK, apps)
 }

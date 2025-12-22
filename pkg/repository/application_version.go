@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"github.com/doug-martin/goqu/v9"
 	"neploy.dev/pkg/common"
 	"neploy.dev/pkg/logger"
@@ -16,11 +17,6 @@ type ApplicationVersion struct {
 
 func NewApplicationVersion(db store.Queryable) *ApplicationVersion {
 	return &ApplicationVersion{Base[model.ApplicationVersion]{Store: db, Table: "application_versions"}}
-}
-
-func (a *ApplicationVersion) Insert(ctx context.Context, version model.ApplicationVersion) error {
-	_, err := a.UpsertOneDoNothing(ctx, version, "application_id", "version_tag")
-	return err
 }
 
 func (a *ApplicationVersion) Delete(ctx context.Context, id string) error {

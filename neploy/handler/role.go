@@ -140,15 +140,15 @@ func (h *Role) Delete(c echo.Context) error {
 // @Router /roles/users/{id} [get]
 func (h *Role) GetUserRoles(c echo.Context) error {
 	userID := c.Param("id")
-	_, err := h.service.GetUserRoles(c.Request().Context(), userID)
+	roles, err := h.service.GetUserRoles(c.Request().Context(), userID)
 	if err != nil {
 		logger.Error("error getting user roles: %v", err)
 		return c.JSON(http.StatusBadRequest, echo.Map{"message": "bad request"})
 	}
 
-	return nil /* h.inertia.Render(c.Response().Writer, c.Request(), "Dashboard/UserRoles", gonertia.Props{
+	return c.JSON(http.StatusOK, echo.Map{
 		"roles": roles,
-	}) */
+	})
 }
 
 // AddUserRole godoc

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
 	"neploy.dev/pkg/common"
 
 	"github.com/doug-martin/goqu/v9"
@@ -57,40 +58,6 @@ func (t *TechStack) FindOrCreate(ctx context.Context, name string) (model.TechSt
 	return techStack, nil
 }
 
-func (t *TechStack) Insert(ctx context.Context, techStack model.TechStack) error {
-	query := t.BaseQueryInsert().Rows(techStack)
-	q, args, err := query.ToSQL()
-	if err != nil {
-		logger.Error("error building insert query: %v", err)
-		return err
-	}
-
-	if _, err := t.Store.ExecContext(ctx, q, args...); err != nil {
-		logger.Error("error executing insert query: %v", err)
-		return err
-	}
-
-	common.AttachSQLToTrace(ctx, q)
-	return nil
-}
-
-func (t *TechStack) Update(ctx context.Context, id string, techStack model.TechStack) error {
-	query := filters.ApplyUpdateFilters(t.BaseQueryUpdate().Set(techStack), filters.IsUpdateFilter("id", id))
-	q, args, err := query.ToSQL()
-	if err != nil {
-		logger.Error("error building update query: %v", err)
-		return err
-	}
-
-	if _, err := t.Store.ExecContext(ctx, q, args...); err != nil {
-		logger.Error("error executing update query: %v", err)
-		return err
-	}
-
-	common.AttachSQLToTrace(ctx, q)
-	return nil
-}
-
 func (t *TechStack) Delete(ctx context.Context, id string) error {
 	query := filters.ApplyUpdateFilters(
 		t.BaseQueryUpdate().
@@ -111,42 +78,6 @@ func (t *TechStack) Delete(ctx context.Context, id string) error {
 
 	common.AttachSQLToTrace(ctx, q)
 	return nil
-}
-
-func (t *TechStack) GetByID(ctx context.Context, id string) (model.TechStack, error) {
-	query := t.baseQuery().Where(goqu.Ex{"id": id})
-	q, args, err := query.ToSQL()
-	if err != nil {
-		logger.Error("error building get by id query: %v", err)
-		return model.TechStack{}, err
-	}
-
-	var techStack model.TechStack
-	if err := t.Store.GetContext(ctx, &techStack, q, args...); err != nil {
-		logger.Error("error executing get by id query: %v", err)
-		return model.TechStack{}, err
-	}
-
-	common.AttachSQLToTrace(ctx, q)
-	return techStack, nil
-}
-
-func (t *TechStack) GetAll(ctx context.Context) ([]model.TechStack, error) {
-	query := t.baseQuery().Where(goqu.Ex{"deleted_at": nil})
-	q, args, err := query.ToSQL()
-	if err != nil {
-		logger.Error("error building get all query: %v", err)
-		return nil, err
-	}
-
-	var techStacks []model.TechStack
-	if err := t.Store.SelectContext(ctx, &techStacks, q, args...); err != nil {
-		logger.Error("error executing get all query: %v", err)
-		return nil, err
-	}
-
-	common.AttachSQLToTrace(ctx, q)
-	return techStacks, nil
 }
 
 func (t *TechStack) GetUsageInApps(ctx context.Context) ([]model.TechStat, error) {

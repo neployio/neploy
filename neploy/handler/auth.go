@@ -12,61 +12,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
-	"golang.org/x/oauth2/gitlab"
 	"neploy.dev/config"
+	"neploy.dev/pkg/common"
 	"neploy.dev/pkg/logger"
 	"neploy.dev/pkg/model"
 	"neploy.dev/pkg/service"
 )
-
-// checkRateLimit moved to use model package structures
-
-// checkRateLimit implements a simple rate limiting mechanism
-func checkRateLimit(ip string) bool {
-	model.LoginAttemptsMutex.Lock()
-	defer model.LoginAttemptsMutex.Unlock()
-
-	now := time.Now()
-
-	// Clean up old entries periodically
-	if now.Second()%30 == 0 { // Clean every ~30 seconds
-		for ip, attempt := range model.LoginAttempts {
-			if now.Sub(attempt.LastTry) > 30*time.Minute {
-				delete(model.LoginAttempts, ip)
-			}
-		}
-	}
-
-	attempt, exists := model.LoginAttempts[ip]
-	if !exists {
-		model.LoginAttempts[ip] = &model.LoginAttempt{Attempts: 1, LastTry: now}
-		return true
-	}
-
-	// Check if IP is locked out
-	if !attempt.LockUntil.IsZero() && now.Before(attempt.LockUntil) {
-		return false
-	}
-
-	// Reset attempts if outside rate window
-	if now.Sub(attempt.LastTry) > model.RateWindow {
-		attempt.Attempts = 0
-		attempt.LockUntil = time.Time{}
-	}
-
-	// Increment attempt counter
-	attempt.Attempts++
-	attempt.LastTry = now
-
-	// Lock out IP if too many attempts
-	if attempt.Attempts > model.MaxLoginAttempts {
-		attempt.LockUntil = now.Add(model.LockoutDuration)
-		return false
-	}
-
-	return true
-}
 
 type Auth struct {
 	user     service.User
@@ -80,41 +31,15 @@ func NewAuth(user service.User, metadata service.Metadata) *Auth {
 	}
 }
 
-func GetConfig(provider model.Provider) *oauth2.Config {
-	switch provider {
-	case model.Github:
-		return &oauth2.Config{
-			ClientID:     config.Env.GithubClientID,
-			ClientSecret: config.Env.GithubClientSecret,
-			RedirectURL:  "http://neploy.live:8081/auth/github/callback",
-			Scopes:       []string{"user:email", "read:user"},
-			Endpoint:     github.Endpoint,
-		}
-	case model.Gitlab:
-		return &oauth2.Config{
-			ClientID:     config.Env.GitlabApplicationID,
-			ClientSecret: config.Env.GitlabSecret,
-			RedirectURL:  "http://neploy.live:8081/auth/gitlab/callback",
-			Scopes:       []string{"read_user"},
-			Endpoint:     gitlab.Endpoint,
-		}
-	default:
-		return nil
-	}
-}
-
 func (a *Auth) RegisterRoutes(r *echo.Group) {
 	r.POST("/login", a.Login)
 	r.GET("/logout", a.Logout)
 	r.POST("/password/change", a.PasswordReset)
 	r.GET("/password/change", a.PasswordResetPage, neployware.ResetTokenMiddleware(), neployware.JWTMiddleware())
-	r.GET("", a.Index)
-	r.GET("/manual", a.GetMarkdown)
-	r.GET("/onboard", a.Onboard)
-	r.GET("/auth/github", a.GithubOAuth)
-	r.GET("/auth/github/callback", a.GithubOAuthCallback)
-	r.GET("/auth/gitlab", a.GitlabOAuth)
-	r.GET("/auth/gitlab/callback", a.GitlabOAuthCallback)
+	r.GET("/github", a.GithubOAuth)
+	r.GET("/github/callback", a.GithubOAuthCallback)
+	r.GET("/gitlab", a.GitlabOAuth)
+	r.GET("/gitlab/callback", a.GitlabOAuthCallback)
 }
 
 // Login godoc
@@ -132,7 +57,7 @@ func (a *Auth) Login(c echo.Context) error {
 	clientIP := c.RealIP()
 
 	// Simple in-memory rate limiting (should be replaced with a proper rate limiter in production)
-	if !checkRateLimit(clientIP) {
+	if !common.CheckRateLimit(clientIP) {
 		return c.JSON(http.StatusTooManyRequests, map[string]interface{}{
 			"error": "Too many login attempts, please try again later",
 		})
@@ -209,25 +134,7 @@ func (a *Auth) Logout(c echo.Context) error {
 	cookie.Expires = time.Unix(0, 0)
 	c.SetCookie(cookie)
 
-	// a.i.Redirect(c.Response(), c.Request(), "/")
-
-	return nil
-}
-
-func (a *Auth) Index(c echo.Context) error {
-	// metadata, err := a.metadata.Get(c.Request().Context())
-	// if err != nil {
-	// 	return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-	// 		"error": "Failed to get metadata",
-	// 	})
-	// }
-	// return a.i.Render(c.Response(), c.Request(), "Home/Login", inertia.Props{"logoUrl": metadata.LogoURL, "name": metadata.TeamName, "language": metadata.Language})
-	return nil
-}
-
-func (a *Auth) Onboard(c echo.Context) error {
-	// return a.i.Render(c.Response(), c.Request(), "Home/Onboard", inertia.Props{})
-	return nil
+	return c.NoContent(http.StatusAccepted)
 }
 
 // GithubOAuth godoc
@@ -239,7 +146,7 @@ func (a *Auth) Onboard(c echo.Context) error {
 // @Success 302 {string} string "Redirects to GitHub OAuth flow"
 // @Router /auth/github [get]
 func (a *Auth) GithubOAuth(c echo.Context) error {
-	githubConfig := GetConfig(model.Github)
+	githubConfig := common.GetConfig(model.Github)
 	state := c.QueryParam("state") // Get state parameter (invitation token)
 	logger.Info("Starting GitHub OAuth with state: %s", state)
 	url := githubConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
@@ -260,7 +167,7 @@ func (a *Auth) GithubOAuthCallback(c echo.Context) error {
 	code := c.QueryParam("code")
 	state := c.QueryParam("state")
 	logger.Info("GitHub OAuth callback received with state: %s", state)
-	githubConfig := GetConfig(model.Github)
+	githubConfig := common.GetConfig(model.Github)
 	token, err := githubConfig.Exchange(context.Background(), code)
 	if err != nil {
 		logger.Error("Failed to exchange token: %v", err)
@@ -342,7 +249,7 @@ func (a *Auth) GithubOAuthCallback(c echo.Context) error {
 // @Success 302 {string} string "Redirects to GitLab OAuth flow"
 // @Router /auth/gitlab [get]
 func (a *Auth) GitlabOAuth(c echo.Context) error {
-	gitlabConfig := GetConfig(model.Gitlab)
+	gitlabConfig := common.GetConfig(model.Gitlab)
 	state := c.QueryParam("state") // Get state parameter (invitation token)
 	logger.Info("Starting GitLab OAuth with state: %s", state)
 	url := gitlabConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
@@ -363,7 +270,7 @@ func (a *Auth) GitlabOAuthCallback(c echo.Context) error {
 	code := c.QueryParam("code")
 	state := c.QueryParam("state")
 	logger.Info("GitLab OAuth callback received with state: %s", state)
-	gitlabConfig := GetConfig(model.Gitlab)
+	gitlabConfig := common.GetConfig(model.Gitlab)
 	token, err := gitlabConfig.Exchange(context.Background(), code)
 	if err != nil {
 		logger.Error("Failed to exchange token: %v", err)
@@ -447,25 +354,14 @@ func (a *Auth) PasswordReset(c echo.Context) error {
 }
 
 func (a *Auth) PasswordResetPage(c echo.Context) error {
-	// claims, ok := c.Get("claims").(model.JWTClaims)
-	// if !ok {
-	// 	return c.JSON(http.StatusUnauthorized, map[string]interface{}{
-	// 		"error": "Unauthorized",
-	// 	})
-	// }
+	claims, ok := c.Get("claims").(model.JWTClaims)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+			"error": "Unauthorized",
+		})
+	}
 
-	// return a.i.Render(c.Response(), c.Request(), "Auth/PasswordReset", inertia.Props{"name": claims.Name})
-	return nil
-}
-
-func (d *Auth) GetMarkdown(c echo.Context) error {
-	// content, err := os.ReadFile("resources/md/introduccion.md")
-	// if err != nil {
-	// 	return c.String(http.StatusNotFound, "Sección no encontrada")
-	// }
-
-	// return d.i.Render(c.Response().Writer, c.Request(), "Home/Manual", map[string]interface{}{
-	// 	"content": string(content),
-	// })
-	return nil
+	return c.JSON(http.StatusOK, echo.Map{
+		"name": claims.Name,
+	})
 }

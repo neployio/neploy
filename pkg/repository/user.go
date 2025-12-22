@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+
 	"neploy.dev/pkg/common"
 
 	"github.com/doug-martin/goqu/v9"
@@ -16,60 +17,6 @@ type User struct {
 
 func NewUser(db store.Queryable) *User {
 	return &User{Base: Base[model.User]{Store: db, Table: "users"}}
-}
-
-func (u *User) Create(ctx context.Context, user model.User) (model.User, error) {
-	query := u.BaseQueryInsert().
-		Rows(user).
-		Returning("*")
-
-	q, args, err := query.ToSQL()
-	if err != nil {
-		return model.User{}, err
-	}
-
-	var newUser model.User
-	if err := u.Store.QueryRowxContext(ctx, q, args...).StructScan(&newUser); err != nil {
-		return model.User{}, err
-	}
-
-	common.AttachSQLToTrace(ctx, q)
-	return newUser, nil
-}
-
-func (u *User) Get(ctx context.Context, id string) (model.User, error) {
-	query := filters.ApplyFilters(u.baseQuery(), filters.IsSelectFilter("id", id))
-
-	q, args, err := query.ToSQL()
-	if err != nil {
-		return model.User{}, err
-	}
-
-	var user model.User
-	if err := u.Store.GetContext(ctx, &user, q, args...); err != nil {
-		return model.User{}, err
-	}
-
-	common.AttachSQLToTrace(ctx, q)
-	return user, nil
-}
-
-func (u *User) Update(ctx context.Context, user model.User) error {
-	query := u.BaseQueryUpdate().
-		Set(user).
-		Where(goqu.Ex{"id": user.ID})
-
-	q, args, err := query.ToSQL()
-	if err != nil {
-		return err
-	}
-
-	if _, err := u.Store.ExecContext(ctx, q, args...); err != nil {
-		return err
-	}
-
-	common.AttachSQLToTrace(ctx, q)
-	return nil
 }
 
 func (u *User) Delete(ctx context.Context, id string) error {
